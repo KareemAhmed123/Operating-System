@@ -106,6 +106,14 @@ void CGA_Screen::getpos (int &x, int &y){
 
 void CGA_Screen::print (char* text, int length, unsigned char attrib){
     for(int i=0; i<length; i++){
+        // A newline does not draw a visible character.
+        // It moves the cursor to the first column of the next row.
+        if(text[i] == '\n'){
+            cursor_x = 0;
+            cursor_y++;
+            continue;
+        }
+
         // Print the current character at the current cursor position.
         show(cursor_x, cursor_y, text[i], attrib);
 

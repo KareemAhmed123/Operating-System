@@ -23,11 +23,35 @@
 
 class O_Stream
 /* Add your code here */ 
+	: public Stringbuffer
 {
+private:
+	int base;
+
+	void print_unsigned(unsigned long long value);
+	void print_signed(long long value);
+
 public:
 	O_Stream(const O_Stream &copy) = delete; // prevent copying
 	O_Stream& operator=(const O_Stream&) = delete; // prevent assignment
 /* Add your code here */ 
+	O_Stream();
+
+	void set_base(int new_base);
+
+	O_Stream& operator<< (char c);
+	O_Stream& operator<< (unsigned char c);
+	O_Stream& operator<< (char* text);
+	O_Stream& operator<< (const char* text);
+	O_Stream& operator<< (short value);
+	O_Stream& operator<< (unsigned short value);
+	O_Stream& operator<< (int value);
+	O_Stream& operator<< (unsigned int value);
+	O_Stream& operator<< (long value);
+	O_Stream& operator<< (unsigned long value);
+	O_Stream& operator<< (long long value);
+	O_Stream& operator<< (unsigned long long value);
+	O_Stream& operator<< (O_Stream& (*manipulator)(O_Stream&));
 };
 
 /*---------------------------------------------------------------------------*/
@@ -45,17 +69,22 @@ public:
 
 // ENDL: inserts a newline in the output and flushes the buffer
 /* Add your code here */ 
+O_Stream& endl(O_Stream& stream);
 
 // BIN: selects the binary number system
 /* Add your code here */ 
+O_Stream& bin(O_Stream& stream);
 
 // OCT: selects the octal number system
 /* Add your code here */ 
+O_Stream& oct(O_Stream& stream);
 
 // DEC: selects the decimal number system
 /* Add your code here */ 
+O_Stream& dec(O_Stream& stream);
 
 // HEX: selects the hexadecimal number system
 /* Add your code here */ 
+O_Stream& hex(O_Stream& stream);
 
 #endif

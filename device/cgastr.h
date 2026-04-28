@@ -19,11 +19,15 @@
 
 class CGA_Stream
 /* Add your code here */ 
+	: public O_Stream, public CGA_Screen
 {
 public:
 	CGA_Stream(CGA_Stream &copy) = delete; // prevent copying
 	CGA_Stream& operator=(const CGA_Stream&) = delete; // prevent assignment
 /* Add your code here */ 
+	CGA_Stream();
+
+	void flush();
 };
 
 #endif
