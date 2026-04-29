@@ -18,6 +18,7 @@ class Keyboard_Controller {
 public:
 	Keyboard_Controller(const Keyboard_Controller &copy) = delete; // prevent copying
 	Keyboard_Controller& operator=(const Keyboard_Controller&) = delete; // prevent assignment
+	bool send_byte(unsigned char value);
 private:
 	unsigned char code;
 	unsigned char prefix;

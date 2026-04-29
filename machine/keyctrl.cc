@@ -233,7 +233,16 @@ Key Keyboard_Controller::key_hit()
 	Key invalid; // not explicitly initialized Key objects are invalid
 /* Add your code here */ 
 /* Add your code here */ 
- 
+    while (1) {
+       while (!(ctrl_port.inb() & 0x01)) {}
+
+        code = data_port.inb();
+
+        if (key_decoded()) {
+            get_ascii_code();
+            return gather;
+        }
+    } 
 /* Add your code here */ 
 	return invalid;
 }
@@ -270,7 +279,12 @@ void Keyboard_Controller::reboot()
 void Keyboard_Controller::set_repeat_rate(int speed, int delay)
 {
 /* Add your code here */ 
- 
+	unsigned char value = ((delay & 0x03) << 5) | (speed & 0x1F);
+    if (!send_byte(0xF3)) {
+        return;
+    }
+
+    send_byte(value);
 /* Add your code here */ 
  
 }
@@ -280,7 +294,35 @@ void Keyboard_Controller::set_repeat_rate(int speed, int delay)
 void Keyboard_Controller::set_led(char led, bool on)
 {
 /* Add your code here */ 
- 
+    static unsigned char leds = 0;
+
+    if (on) {
+        leds |= (1 << led);
+    } else {
+        leds &= ~(1 << led);
+    }
+
+    if (!send_byte(0xED)) {
+        return;
+    }
+
+    send_byte(leds);  
 /* Add your code here */ 
- 
 }
+
+/*Added Code*/
+//sends controll to keyboard
+bool Keyboard_Controller::send_byte(unsigned char value) {
+    //wait for input buffer empty
+    while (ctrl_port.inb() & 0x02) {
+        // bit 1 is set => input buffer full
+    }
+    data_port.outb(value);
+
+    //wait for output buffer full
+    while (!(ctrl_port.inb() & 0x01)) {
+        // bit 0 not set => output buffer empty
+    }
+    return data_port.inb() == 0xFA;   // ACK
+} 
+

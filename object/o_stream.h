@@ -51,6 +51,7 @@ public:
 	O_Stream& operator<< (unsigned long value);
 	O_Stream& operator<< (long long value);
 	O_Stream& operator<< (unsigned long long value);
+	O_Stream& operator<<(void* pointer);
 	O_Stream& operator<< (O_Stream& (*manipulator)(O_Stream&));
 };
 

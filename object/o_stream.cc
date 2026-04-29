@@ -148,6 +148,20 @@ O_Stream& O_Stream::operator<< (unsigned long long value) {
     return *this;
 }
 
+/* Pointer */
+
+O_Stream& O_Stream::operator<<(void* pointer) {
+	int old_base = base;
+
+    *this << "0x";   // 👈 hinzufügen
+    base = 16;
+
+    print_unsigned((unsigned long)pointer);
+
+    base = old_base;
+    return *this;
+}
+
 O_Stream& O_Stream::operator<< (O_Stream& (*manipulator)(O_Stream&)) {
     return manipulator(*this);
 }

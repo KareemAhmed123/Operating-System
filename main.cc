@@ -1,5 +1,6 @@
 /* Add your code here */ 
 #include "device/cgastr.h"
+#include "machine/keyctrl.h"
 
 // This global stream object is the test output device.
 // It combines O_Stream's << operators with CGA_Screen's screen access.
@@ -8,53 +9,63 @@ CGA_Stream kout;
 int main()
 {
 /* Add your code here */ 
- /*
-  * Old CGA_Screen-only test code:
-  *
-  * #include "machine/cgascr.h"
-  *
-  * CGA_Screen screen;
-  * screen.show(0, 1, 'h', 0x08);
-  * screen.show(1, 1, 'i', 0x07);
-  *
-  * screen.setpos(0, 2);
-  * char text[] = "Hello other Gen";
-  * screen.print(text, sizeof(text) - 1, 0x7);
-  *
-  * What this old test did:
-  * - show() wrote single characters directly to fixed screen positions.
-  * - setpos() moved the hardware cursor manually.
-  * - print() wrote a raw character array with a fixed color attribute.
-  *
-  * That was useful for testing CGA_Screen, but it did not test O_Stream.
-  */
+	
+	Keyboard_Controller keyboard;
+	
+    
+    /*Test : CGA_Stream */
+    
+    /*kout << "Test          <stream result> -> <expected>" << endl;
+	kout << "zero:         " << 0 << " -> 0" << endl;
+	kout << "decimal:      " << dec << 42 << " -> 42" << endl;
+	kout << "binary:       " << bin << 42 << dec << " -> 0b101010" << endl;
+	kout << "octal:        " << oct << 42 << dec << " -> 052" << endl;
+	kout << "hex:          " << hex << 42 << dec << " -> 0x2a" << endl;
+	kout << "uint64_t max: " << ~((unsigned long)0) << " -> 18446744073709551615" << endl;
+	kout << "int64_t max:  " << ~(1l<<63) << " -> 9223372036854775807" << endl;
+	kout << "int64_t min:  " << (1l<<63) << " -> -9223372036854775808" << endl;
+	kout << "some int64_t: " << (-1234567890123456789) << " -> -1234567890123456789" << endl;
+	kout << "some int64_t: " << (1234567890123456789) << " -> 1234567890123456789" << endl;
+	kout << "pointer:      " << reinterpret_cast<void*>(1994473406541717165ul) << " -> 0x1badcafefee1dead" << endl;
+	kout << "smiley:       " << static_cast<char>(1) << endl;*/
+    
+    
 
- // Start the stream test at the top-left corner of the screen.
- kout.setpos(0, 0);
+    /*Test : Keyctr */ 
+	kout << "Press keys..." << endl;
 
- // endl writes a newline and flushes the stream buffer to the CGA screen.
- kout << "O_Stream test" << endl;
- kout << "-------------" << endl;
-
- // Test character and string output.
- kout << "char: " << 'A' << endl;
- kout << "string: " << "Hello from CGA_Stream" << endl;
-
- // Test signed and unsigned decimal output.
- kout << "signed decimal: " << -42 << endl;
- kout << "unsigned decimal: " << 12345u << endl;
-
- // Test the base manipulators.
- // Each manipulator changes how the following integer numbers are printed.
- kout << "hex 255: " << hex << 255 << endl;
- kout << "oct 255: " << oct << 255 << endl;
- kout << "bin 13: " << bin << 13 << endl;
-
- // Switch back to decimal so later numbers are readable in the normal base.
- kout << dec << "back to dec: " << 255 << endl;
-
- // Show that several bases can be used in one output chain.
- kout << "mixed: " << dec << 10 << " " << hex << 10 << " " << bin << 10 << endl;
+	int s =0;
+	int d = 0; 
+	int z = 0;
+	
+    while (1) {
+        Key k = keyboard.key_hit();
+        if (k.valid()) {
+			if (k.scancode()== 0x1){
+				kout << endl <<"d for Delay"  << "s for speed" << endl;
+				while ( z == 0){
+					Key seter = keyboard.key_hit();
+					char set = (char)seter.ascii();
+					if (set == 'd'){
+						d++;
+						if (d > 3){ d=0;}
+						
+					} else if (set == 's'){
+						s = s + 5;
+						if (s>31){s=0;}						
+					} else if (seter.scancode() == 0x1){
+						z = 1;
+					}
+				}
+				z = 0;
+				keyboard.set_repeat_rate(s, d);
+				kout <<"Delay: " << d << " Speed: " << s << endl;
+			} else {
+				kout << k.ascii();
+			}
+        }
+        kout.flush();
+    }
 
 
 /* Add your code here */ 
