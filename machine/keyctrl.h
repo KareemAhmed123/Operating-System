@@ -18,7 +18,6 @@ class Keyboard_Controller {
 public:
 	Keyboard_Controller(const Keyboard_Controller &copy) = delete; // prevent copying
 	Keyboard_Controller& operator=(const Keyboard_Controller&) = delete; // prevent assignment
-	bool send_byte(unsigned char value);
 private:
 	unsigned char code;
 	unsigned char prefix;
@@ -56,6 +55,10 @@ private:
 	static unsigned char alt_tab[];
 	static unsigned char asc_num_tab[];
 	static unsigned char scan_num_tab[];
+	
+	void wait_for_input_buffer_empty();
+    void wait_for_output_buffer_full();
+    bool send_byte(unsigned char value);
 
 	// KEY_DECODED: Interprets the keyboard's make and break codes and
 	//              provides the ASCII code, the scan code, and information

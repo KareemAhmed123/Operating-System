@@ -10,7 +10,10 @@
 /*****************************************************************************/
 
 /* INCLUDES */
+#include "machine/plugbox.h"
 
+
+extern Plugbox plugbox;
 /* FUNCTIONS */
 
 extern "C" void guardian (unsigned int slot);
@@ -19,6 +22,6 @@ extern "C" void guardian (unsigned int slot);
 /*           a later point in time.                                        */
 
 void guardian (unsigned int slot)
-{
- 
+{	
+	plugbox.report(slot).trigger();
 }

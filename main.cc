@@ -1,76 +1,65 @@
 /* Add your code here */ 
 #include "device/cgastr.h"
-#include "machine/keyctrl.h"
+#include "device/keyboard.h"
+#include "machine/plugbox.h"
+#include "machine/pic.h"
+#include "user/appl.h"
+#include "machine/cpu.h"
 
-// This global stream object is the test output device.
-// It combines O_Stream's << operators with CGA_Screen's screen access.
+//Test
+//#include "machine/keyctrl.h"
+Keyboard_Controller keyb;
+
+
 CGA_Stream kout;
+Plugbox plugbox;
+PIC pic;
+CPU cpu;
 
 int main()
-{
-/* Add your code here */ 
+{	//initialaization
+	Keyboard keyboard;
+	keyboard.plugin();
+	kout.clear();
 	
-	Keyboard_Controller keyboard;
+	//interupt enabaling
+	//cpu.enable_int();
+	//pic.allow(PIC::keyboard);
 	
-    
-    /*Test : CGA_Stream */
-    
-    /*kout << "Test          <stream result> -> <expected>" << endl;
-	kout << "zero:         " << 0 << " -> 0" << endl;
-	kout << "decimal:      " << dec << 42 << " -> 42" << endl;
-	kout << "binary:       " << bin << 42 << dec << " -> 0b101010" << endl;
-	kout << "octal:        " << oct << 42 << dec << " -> 052" << endl;
-	kout << "hex:          " << hex << 42 << dec << " -> 0x2a" << endl;
-	kout << "uint64_t max: " << ~((unsigned long)0) << " -> 18446744073709551615" << endl;
-	kout << "int64_t max:  " << ~(1l<<63) << " -> 9223372036854775807" << endl;
-	kout << "int64_t min:  " << (1l<<63) << " -> -9223372036854775808" << endl;
-	kout << "some int64_t: " << (-1234567890123456789) << " -> -1234567890123456789" << endl;
-	kout << "some int64_t: " << (1234567890123456789) << " -> 1234567890123456789" << endl;
-	kout << "pointer:      " << reinterpret_cast<void*>(1994473406541717165ul) << " -> 0x1badcafefee1dead" << endl;
-	kout << "smiley:       " << static_cast<char>(1) << endl;*/
-    
-    
-
-    /*Test : Keyctr */ 
-	kout << "Press keys..." << endl;
-
-	int s =0;
-	int d = 0; 
-	int z = 0;
+	//Aplication
 	
-    while (1) {
-        Key k = keyboard.key_hit();
-        if (k.valid()) {
-			if (k.scancode()== 0x1){
-				kout << endl <<"d for Delay"  << "s for speed" << endl;
-				while ( z == 0){
-					Key seter = keyboard.key_hit();
-					char set = (char)seter.ascii();
-					if (set == 'd'){
-						d++;
-						if (d > 3){ d=0;}
-						
-					} else if (set == 's'){
-						s = s + 5;
-						if (s>31){s=0;}						
-					} else if (seter.scancode() == 0x1){
-						z = 1;
-					}
-				}
-				z = 0;
-				keyboard.set_repeat_rate(s, d);
-				kout <<"Delay: " << d << " Speed: " << s << endl;
-			} else {
-				kout << k.ascii();
+	//Selection of Program
+	kout << "Choose Program:" << endl;
+	kout << "1 Mess" << endl;
+	kout << "2 Fix" << endl;
+	bool c = true;
+	int i;
+	while(c){
+		Key k = keyb.key_hit();
+		if (k.valid()) { 
+			if(k.scancode() == 0x2){
+				i = 1;
+				c = false;
+				kout << 1;
+			} else if(k.scancode() == 0x3){
+				i = 2;
+				c = false;
+				kout << 2;
 			}
-        }
-        kout.flush();
-    }
-
-
+		}
+	}
+	kout.clear();
+	for(int a = 0; a<100; a++){}
+	cpu.enable_int();
+	pic.allow(PIC::keyboard);
+	
+	//running Program
+	Application application;
+	while (1) {application.action(i);} 
 /* Add your code here */ 
- 
+	kout << "Error";
 /* Add your code here */ 
- 
 	return 0;
 }
+
+//make qemu  (auto-complet)

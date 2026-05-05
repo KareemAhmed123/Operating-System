@@ -20,131 +20,104 @@
 
 /* Add your code here */ 
 
-O_Stream::O_Stream() : Stringbuffer() {
-    // Numbers are printed as decimal values by default,
-    // just like in the normal C++ output stream.
-    base = 10;
+O_Stream::O_Stream() : Stringbuffer(), base(10) {
 }
 
-void O_Stream::set_base(int new_base) {
-    // Only the number systems used by our manipulators are accepted.
-    // If somebody passes a different value, we keep the old base.
-    if (new_base == 2 || new_base == 8 || new_base == 10 || new_base == 16) {
-        base = new_base;
-    }
+void O_Stream::set_base(int b) {
+    base = b;
 }
 
-void O_Stream::print_unsigned(unsigned long long value) {
-    char digits[] = "0123456789abcdef";
-    char number[65];
-    int index = 0;
+/* Hilfsfunktion für Zahlenausgabe */
+void O_Stream::print_number(unsigned long number) {
+    char tmp[32];
+    int i = 0;
 
-    // The number 0 is a special case:
-    // the loop below would not write any digit for it.
-    if (value == 0) {
+    if (number == 0) {
         put('0');
         return;
     }
 
-    // We get the digits from right to left.
-    // Example in decimal:
-    // 123 % 10 = 3, then 12 % 10 = 2, then 1 % 10 = 1.
-    while (value > 0) {
-        number[index] = digits[value % base];
-        value = value / base;
-        index++;
+    while (number > 0) {
+        unsigned long digit = number % base;
+
+        if (digit < 10)
+            tmp[i++] = '0' + digit;
+        else
+            tmp[i++] = 'A' + (digit - 10);
+
+        number /= base;
     }
 
-    // The temporary array now contains the digits backwards.
-    // Therefore we print it from the last filled position down to zero.
-    while (index > 0) {
-        index--;
-        put(number[index]);
+    while (i > 0) {
+        put(tmp[--i]);
     }
 }
 
-void O_Stream::print_signed(long long value) {
-    // A minus sign only belongs to decimal output.
-    // In binary, octal and hexadecimal the bit pattern is shown instead.
-    if (base == 10 && value < 0) {
+/* Zeichen */
+
+O_Stream& O_Stream::operator<<(char c) {
+    put(c);
+    return *this;
+}
+
+O_Stream& O_Stream::operator<<(unsigned char c) {
+    put((char)c);
+    return *this;
+}
+
+/* String */
+
+O_Stream& O_Stream::operator<<(char* text) {
+    while (*text) {
+        put(*text++);
+    }
+    return *this;
+}
+
+/* Zahlen */
+
+O_Stream& O_Stream::operator<<(unsigned short number) {
+    print_number(number);
+    return *this;
+}
+
+O_Stream& O_Stream::operator<<(short number) {
+    if (base == 10 && number < 0) {
         put('-');
-        print_unsigned(0 - (unsigned long long)value);
+        print_number(-number);
     } else {
-        print_unsigned((unsigned long long)value);
+        print_number((unsigned short)number);
     }
-}
-
-O_Stream& O_Stream::operator<< (char c) {
-    put(c);
     return *this;
 }
 
-O_Stream& O_Stream::operator<< (unsigned char c) {
-    put(c);
+O_Stream& O_Stream::operator<<(unsigned int number) {
+    print_number(number);
     return *this;
 }
 
-O_Stream& O_Stream::operator<< (char* text) {
-    // Strings end with a zero byte.
-    // We copy every character before that terminator into the buffer.
-    if (text != 0) {
-        while (*text != '\0') {
-            put(*text);
-            text++;
-        }
+O_Stream& O_Stream::operator<<(int number) {
+    if (base == 10 && number < 0) {
+        put('-');
+        print_number(-number);
+    } else {
+        print_number((unsigned int)number);
     }
-
     return *this;
 }
 
-O_Stream& O_Stream::operator<< (const char* text) {
-    if (text != 0) {
-        while (*text != '\0') {
-            put(*text);
-            text++;
-        }
+O_Stream& O_Stream::operator<<(unsigned long number) {
+    print_number(number);
+    return *this;
+}
+
+O_Stream& O_Stream::operator<<(long number) {
+    if (base == 10 && number < 0) {
+        put('-');
+        print_number(-number);
+    } else {
+        print_number((unsigned long)number);
     }
-
-    return *this;
-}
-
-O_Stream& O_Stream::operator<< (short value) {
-    print_signed(value);
-    return *this;
-}
-
-O_Stream& O_Stream::operator<< (unsigned short value) {
-    print_unsigned(value);
-    return *this;
-}
-
-O_Stream& O_Stream::operator<< (int value) {
-    print_signed(value);
-    return *this;
-}
-
-O_Stream& O_Stream::operator<< (unsigned int value) {
-    print_unsigned(value);
-    return *this;
-}
-
-O_Stream& O_Stream::operator<< (long value) {
-    print_signed(value);
-    return *this;
-}
-
-O_Stream& O_Stream::operator<< (unsigned long value) {
-    print_unsigned(value);
-    return *this;
-}
-
-O_Stream& O_Stream::operator<< (long long value) {
-    print_signed(value);
-    return *this;
-}
-
-O_Stream& O_Stream::operator<< (unsigned long long value) {
-    print_unsigned(value);
     return *this;
 }
 
@@ -156,38 +129,44 @@ O_Stream& O_Stream::operator<<(void* pointer) {
     *this << "0x";   // 👈 hinzufügen
     base = 16;
 
-    print_unsigned((unsigned long)pointer);
+    print_number((unsigned long)pointer);
 
     base = old_base;
     return *this;
 }
 
-O_Stream& O_Stream::operator<< (O_Stream& (*manipulator)(O_Stream&)) {
-    return manipulator(*this);
+/* Manipulator-Aufruf */
+
+O_Stream& O_Stream::operator<<(O_Stream& (*f)(O_Stream&)) {
+    return f(*this);
 }
 
-O_Stream& endl(O_Stream& stream) {
-    stream << '\n';
-    stream.flush();
-    return stream;
+/* ===================== */
+/*     MANIPULATORS      */
+/* ===================== */
+
+O_Stream& endl(O_Stream& os) {
+    os << '\n';
+    os.flush();
+    return os;
 }
 
-O_Stream& bin(O_Stream& stream) {
-    stream.set_base(2);
-    return stream;
+O_Stream& bin(O_Stream& os) {
+    os.set_base(2);
+    return os;
 }
 
-O_Stream& oct(O_Stream& stream) {
-    stream.set_base(8);
-    return stream;
+O_Stream& oct(O_Stream& os) {
+    os.set_base(8);
+    return os;
 }
 
-O_Stream& dec(O_Stream& stream) {
-    stream.set_base(10);
-    return stream;
+O_Stream& dec(O_Stream& os) {
+    os.set_base(10);
+    return os;
 }
 
-O_Stream& hex(O_Stream& stream) {
-    stream.set_base(16);
-    return stream;
+O_Stream& hex(O_Stream& os) {
+    os.set_base(16);
+    return os;
 }

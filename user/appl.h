@@ -19,8 +19,8 @@ public:
 	Application (const Application &copy) = delete; // prevent copying
 	Application& operator=(const Application&) = delete; // prevent assignment
 /* Add your code here */ 
- 
-	void action ();
+	Application(){}
+	void action (int m);
 };
 
 #endif

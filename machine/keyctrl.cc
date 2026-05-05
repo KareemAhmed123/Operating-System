@@ -147,7 +147,10 @@ bool Keyboard_Controller::key_decoded()
 	// can be discarded now.
 	prefix = 0;
 
-	return done;
+	if (done) // keyboard input finished?
+		return true;
+	else
+		return false;
 }
 
 // GET_ASCII_CODE: uses decoding tables to determine the key's ASCII
@@ -216,10 +219,34 @@ Keyboard_Controller::Keyboard_Controller() : ctrl_port(0x64), data_port(0x60)
 	set_led(led::caps_lock, false);
 	set_led(led::scroll_lock, false);
 	set_led(led::num_lock, false);
-
 	// maximum speed, minimal delay
 	set_repeat_rate(0, 0);
 }
+
+//wait for input buffer
+void Keyboard_Controller::wait_for_input_buffer_empty() {
+    while (ctrl_port.inb() & 0x02) {
+        // bit 1 gesetzt => input buffer voll
+    }
+}
+
+//Waits for output
+void Keyboard_Controller::wait_for_output_buffer_full() {
+    while (!(ctrl_port.inb() & 0x01)) {
+        // bit 0 nicht gesetzt => output buffer leer
+    }
+}
+
+//sends controll to keyboard
+bool Keyboard_Controller::send_byte(unsigned char value) {
+    wait_for_input_buffer_empty();
+    data_port.outb(value);
+
+	wait_for_output_buffer_full();
+    for (int i = 0; i<100; i++){} /*Delay*/
+    return data_port.inb() == 0xFA;   // ACK
+}
+
 
 // KEY_HIT: Meant for retrieving information from the keyboard after a
 //          keyboard interrupt occurred. If the key-pressing event has
@@ -231,18 +258,17 @@ Keyboard_Controller::Keyboard_Controller() : ctrl_port(0x64), data_port(0x60)
 Key Keyboard_Controller::key_hit()
 {
 	Key invalid; // not explicitly initialized Key objects are invalid
-/* Add your code here */ 
-/* Add your code here */ 
+/* Add your code here 
     while (1) {
-       while (!(ctrl_port.inb() & 0x01)) {}
-
+       while (!(ctrl_port.inb() & 0x01)) {}*/ 
+		//add check if Source ist Keyboard or mouse
         code = data_port.inb();
 
         if (key_decoded()) {
             get_ascii_code();
             return gather;
         }
-    } 
+    //}
 /* Add your code here */ 
 	return invalid;
 }
@@ -277,7 +303,7 @@ void Keyboard_Controller::reboot()
 //                  slow).
 
 void Keyboard_Controller::set_repeat_rate(int speed, int delay)
-{
+{ 
 /* Add your code here */ 
 	unsigned char value = ((delay & 0x03) << 5) | (speed & 0x1F);
     if (!send_byte(0xF3)) {
@@ -306,23 +332,7 @@ void Keyboard_Controller::set_led(char led, bool on)
         return;
     }
 
-    send_byte(leds);  
+    send_byte(leds); 
 /* Add your code here */ 
+ 
 }
-
-/*Added Code*/
-//sends controll to keyboard
-bool Keyboard_Controller::send_byte(unsigned char value) {
-    //wait for input buffer empty
-    while (ctrl_port.inb() & 0x02) {
-        // bit 1 is set => input buffer full
-    }
-    data_port.outb(value);
-
-    //wait for output buffer full
-    while (!(ctrl_port.inb() & 0x01)) {
-        // bit 0 not set => output buffer empty
-    }
-    return data_port.inb() == 0xFA;   // ACK
-} 
-

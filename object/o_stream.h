@@ -21,38 +21,40 @@
 
 #include "object/strbuf.h"
 
-class O_Stream
+class O_Stream : public Stringbuffer
 /* Add your code here */ 
-	: public Stringbuffer
 {
-private:
-	int base;
-
-	void print_unsigned(unsigned long long value);
-	void print_signed(long long value);
-
+/* Add your code here */ 
+protected:
+    int base;
+    void print_number(unsigned long number);
+/* Add your code here */ 
+    
 public:
 	O_Stream(const O_Stream &copy) = delete; // prevent copying
 	O_Stream& operator=(const O_Stream&) = delete; // prevent assignment
 /* Add your code here */ 
 	O_Stream();
+	
+	void set_base(int b);
 
-	void set_base(int new_base);
+    O_Stream& operator<<(char c);
+    O_Stream& operator<<(unsigned char c);
 
-	O_Stream& operator<< (char c);
-	O_Stream& operator<< (unsigned char c);
-	O_Stream& operator<< (char* text);
-	O_Stream& operator<< (const char* text);
-	O_Stream& operator<< (short value);
-	O_Stream& operator<< (unsigned short value);
-	O_Stream& operator<< (int value);
-	O_Stream& operator<< (unsigned int value);
-	O_Stream& operator<< (long value);
-	O_Stream& operator<< (unsigned long value);
-	O_Stream& operator<< (long long value);
-	O_Stream& operator<< (unsigned long long value);
-	O_Stream& operator<<(void* pointer);
-	O_Stream& operator<< (O_Stream& (*manipulator)(O_Stream&));
+    O_Stream& operator<<(short number);
+    O_Stream& operator<<(unsigned short number);
+
+    O_Stream& operator<<(int number);
+    O_Stream& operator<<(unsigned int number);
+
+    O_Stream& operator<<(long number);
+    O_Stream& operator<<(unsigned long number);
+
+    O_Stream& operator<<(void* pointer);
+    O_Stream& operator<<(char* text);
+
+    O_Stream& operator<<(O_Stream& (*f)(O_Stream&));
+/* Add your code here */ 
 };
 
 /*---------------------------------------------------------------------------*/
@@ -70,22 +72,22 @@ public:
 
 // ENDL: inserts a newline in the output and flushes the buffer
 /* Add your code here */ 
-O_Stream& endl(O_Stream& stream);
+O_Stream& endl(O_Stream& os);
 
 // BIN: selects the binary number system
 /* Add your code here */ 
-O_Stream& bin(O_Stream& stream);
+O_Stream& bin(O_Stream& os);
 
 // OCT: selects the octal number system
 /* Add your code here */ 
-O_Stream& oct(O_Stream& stream);
+O_Stream& oct(O_Stream& os);
 
 // DEC: selects the decimal number system
 /* Add your code here */ 
-O_Stream& dec(O_Stream& stream);
+O_Stream& dec(O_Stream& os);
 
 // HEX: selects the hexadecimal number system
 /* Add your code here */ 
-O_Stream& hex(O_Stream& stream);
+O_Stream& hex(O_Stream& os);
 
 #endif

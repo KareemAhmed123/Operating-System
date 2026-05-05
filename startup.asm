@@ -226,8 +226,6 @@ clear_bss:
 	;or rax, 3 << 9		;set CR4.OSFXSR and CR4.OSXMMEXCPT at the same time
 	;mov cr4, rax
 
-	and rsp, 0xfffffffffffffff0 ; align stack to 16-byte boundary (some SSE instructions may trap otherwise)
-
 	call   _init   ; call constructors of global objects
 	call   main    ; call the OS kernel's C / C++ part
 	call   _fini   ; call destructors

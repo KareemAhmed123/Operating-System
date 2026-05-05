@@ -19,10 +19,9 @@ CGA_Stream::CGA_Stream() : O_Stream(), CGA_Screen() {
 }
 
 void CGA_Stream::flush() {
-    // The Stringbuffer part collected characters in buf[0] up to buf[pos - 1].
-    // The CGA_Screen part knows how to show these characters on the screen.
-    print(buf, Stringbuffer::pos, 0x07);
+    // Buffer ausgeben
+    print(Stringbuffer::buf, Stringbuffer::pos, 0x07);
 
-    // After printing, the buffer is empty again.
-    Stringbuffer::pos = 0;
+    // Buffer zurücksetzen
+   Stringbuffer::pos = 0;
 }
