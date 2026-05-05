@@ -262,6 +262,8 @@ Key Keyboard_Controller::key_hit()
     while (1) {
        while (!(ctrl_port.inb() & 0x01)) {}*/ 
 		//add check if Source ist Keyboard or mouse
+		//empty Keyboard buffer
+		//check corcctness
         code = data_port.inb();
 
         if (key_decoded()) {
@@ -305,6 +307,7 @@ void Keyboard_Controller::reboot()
 void Keyboard_Controller::set_repeat_rate(int speed, int delay)
 { 
 /* Add your code here */ 
+//add deactivate interupt in PIC
 	unsigned char value = ((delay & 0x03) << 5) | (speed & 0x1F);
     if (!send_byte(0xF3)) {
         return;
@@ -320,6 +323,7 @@ void Keyboard_Controller::set_repeat_rate(int speed, int delay)
 void Keyboard_Controller::set_led(char led, bool on)
 {
 /* Add your code here */ 
+	//add deactivate interupt in PIC
     static unsigned char leds = 0;
 
     if (on) {

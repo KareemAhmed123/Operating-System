@@ -28,5 +28,6 @@ void Plugbox::assign(unsigned int slot, Gate& gate){
 
 //retrives a Gate for a given Slot
 Gate& Plugbox::report(unsigned int slot){
+	//add sice check
 	return *gates[slot];
 }

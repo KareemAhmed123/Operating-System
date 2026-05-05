@@ -29,7 +29,7 @@ void Keyboard::trigger(){
 		return;
 	}
 	// Ctrl + Alt + (a)"Del" → reboot
-    if ((k.ctrl() && k.alt()) && k.scancode() == /*0x1E*/ 0x53) {
+    if ((k.ctrl() && k.alt()) && k.scancode() == 0x1E /*0x53*/) {
 		kout << "REBOOT"<<endl;
 		reboot();
         return;
