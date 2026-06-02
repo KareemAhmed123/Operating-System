@@ -13,7 +13,13 @@
 
 Panic panic;
 
-void Panic::trigger(){
+bool Panic::trigger()
+{
+	return true;
+}
+
+void Panic::epilogue()
+{
 	extern CGA_Stream kout;
 	extern CPU cpu;
 

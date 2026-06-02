@@ -5,6 +5,7 @@
 #include "machine/pic.h"
 #include "user/appl.h"
 #include "machine/cpu.h"
+#include "guard/guard.h"
 
 //Test
 //#include "machine/keyctrl.h"
@@ -15,6 +16,7 @@ CGA_Stream kout;
 Plugbox plugbox;
 PIC pic;
 CPU cpu;
+Guard guard;
 
 int main()
 {	//initialaization

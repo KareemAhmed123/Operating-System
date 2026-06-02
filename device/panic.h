@@ -25,7 +25,8 @@ public:
 	Panic& operator=(const Panic&) = delete; // prevent assignment
 	Panic () {}
 /* Add your code here */ 
-	void trigger();
+	bool trigger();
+	void epilogue();
 };
 
 #endif

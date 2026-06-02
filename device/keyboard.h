@@ -33,8 +33,10 @@ public:
 	void plugin();
 
 /* Add your code here */
-	void trigger();
+	bool trigger();
 	
+	void epilogue();
+
 
 };
 

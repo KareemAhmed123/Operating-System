@@ -21,7 +21,10 @@ void Keyboard::plugin(){
 	pic.allow(PIC::keyboard);
 }
 
-void Keyboard::trigger(){
+bool Keyboard::trigger(){
+	return true;
+}
+void Keyboard::epilogue(){
 	
 	Key k = key_hit();
 	//throw out invalid
