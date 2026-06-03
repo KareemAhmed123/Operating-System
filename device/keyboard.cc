@@ -21,16 +21,26 @@ void Keyboard::plugin(){
 	pic.allow(PIC::keyboard);
 }
 
-bool Keyboard::prologue(){
+bool Keyboard::trigger(){
+	keys[posi] = key_hit();
+	//throw out invalid
+	if (keys[posi].valid() == 0){
+		return false;
+	}
+	posi++;
+	if(posi >= SIZE){
+		posi=0;
+	}
+	if(posi == poso){
+		//add buffer overflow Interupt
+		return false;
+	}
 	return true;
 }
 void Keyboard::epilogue(){
-	
-	Key k = key_hit();
-	//throw out invalid
-	if (k.valid() == 0){
-		return;
-	}
+	Key k = keys[poso];
+	poso++;
+	if (poso >= SIZE){poso=0;}
 	// Ctrl + Alt + (a)"Del" → reboot
     if ((k.ctrl() && k.alt()) && k.scancode() == 0x1E /*0x53*/) {
 		kout << "REBOOT"<<endl;

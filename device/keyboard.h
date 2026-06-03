@@ -22,6 +22,12 @@
 class Keyboard : public Gate, public Keyboard_Controller
 /* Add your code here */ 
 {
+protected:
+	static const int SIZE = 8; //Buffer SIZE
+	Key keys[SIZE];
+	int posi = 0; 	//Possition of the last Empty Buffer Element	
+	int poso = 0; 	//Possition of the next to handel Buffer Element
+	
 public:
 	Keyboard(const Keyboard &copy) = delete; // prevent copying
 	Keyboard& operator=(const Keyboard&) = delete; // prevent assignment
