@@ -42,16 +42,16 @@ int main()
 			if(k.scancode() == 0x2){
 				i = 1;
 				c = false;
-				kout << 1;
+				//kout << 1;
 			} else if(k.scancode() == 0x3){
 				i = 2;
 				c = false;
-				kout << 2;
+				//kout << 2;
 			}
 		}
 	}
 	kout.clear();
-	for(int a = 0; a<100; a++){}
+	for(int a = 0; a<10000; a++){}
 	cpu.enable_int();
 	pic.allow(PIC::keyboard);
 	
