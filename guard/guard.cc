@@ -8,14 +8,13 @@ void Guard::leave()
 {
     /* Queue operations must not be interrupted. */
     cpu.disable_int();
-    retne();
+    
 
     Gate* item = (Gate*) queue.dequeue();
 
     /* Run all epilogues that were delayed by a protected section. */
     while (item != 0) {
         item->queued(false);
-        enter();
 
         /* Epilogues may take longer, so allow new interrupt prologues. */
         cpu.enable_int();
@@ -23,10 +22,9 @@ void Guard::leave()
 
         /* Protect the next queue access again. */
         cpu.disable_int();
-        retne();
         item = (Gate*) queue.dequeue();
     }
-
+	retne();
     cpu.enable_int();
 }
 
@@ -40,10 +38,11 @@ void Guard::relay(Gate* item)
         leave();
     } else {
         /* Queue each gate at most once while the Guard is occupied. */
-        cpu.disable_int();
         if (!item->queued()) {
             queue.enqueue(item);
             item->queued(true);
         }
+        cpu.enable_int();
     }
+    //
 }
