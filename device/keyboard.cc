@@ -21,7 +21,7 @@ void Keyboard::plugin(){
 	pic.allow(PIC::keyboard);
 }
 
-bool Keyboard::trigger(){
+bool Keyboard::prologue(){
 	return true;
 }
 void Keyboard::epilogue(){

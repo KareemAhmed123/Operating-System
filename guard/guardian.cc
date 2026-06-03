@@ -66,7 +66,7 @@ void guardian(unsigned int slot)
      *
      * If it returns true, this interrupt has epilogue work to do.
      */
-    if (item.trigger()) {
+    if (item.prologue()) {
         /*
          * Give the Gate to the Guard.
          *

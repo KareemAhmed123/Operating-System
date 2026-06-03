@@ -13,7 +13,7 @@
 
 Panic panic;
 
-bool Panic::trigger()
+bool Panic::prologue()
 {
 	return true;
 }

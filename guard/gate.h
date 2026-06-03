@@ -20,14 +20,23 @@
  * epilogue Queue used by the Guard.
  */
 class Gate : public Chain {
+private:
+    bool is_queued;
+
 public:
- /*
- * Prologue method.
- *
- * Returns true if the epilogue should run later.
- * Returns false if no epilogue is needed.
- */
-    virtual bool trigger() = 0;
+    Gate()
+    {
+        next = 0;
+        is_queued = false;
+    }
+
+    /*
+     * Prologue method.
+     *
+     * Returns true if the epilogue should run later.
+     * Returns false if no epilogue is needed.
+     */
+    virtual bool prologue() = 0;
 
     /*
      * Epilogue method.
@@ -35,7 +44,19 @@ public:
      * This contains the delayed interrupt work that should run later
      * under the control of the Guard.
      */
-    virtual void epilogue() = 0;
+    virtual void epilogue()
+    {
+    }
+
+    void queued(bool q)
+    {
+        is_queued = q;
+    }
+
+    bool queued()
+    {
+        return is_queued;
+    }
 };
 
 #endif

@@ -33,7 +33,7 @@ public:
 	void plugin();
 
 /* Add your code here */
-	bool trigger();
+	bool prologue();
 	
 	void epilogue();
 
