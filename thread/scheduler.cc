@@ -16,21 +16,22 @@ void Scheduler::ready (Entrant& that){
 	ready_list.enqueue(&that);
 }
 
-void Scheduler : schedule(){
+void Scheduler :: schedule(){
 	Entrant* next = (Entrant*) ready_list.dequeue();
     dispatch(*next);
 }
 
-void Scheduler : exit(){
+void Scheduler :: exit(){
 	schedule();
 }
 
-void Scheduler : kill(Entrant& that){
+void Scheduler :: kill(Entrant& that){
 	ready_list.remove(&that);
 }
 
-void Scheduler : resume(){
-	ready_list.enqueue(dispatch.active ());
+void Scheduler :: resume(){
+	Entrant *current = (Entrant*) active();
+    ready(*current);
 	Entrant* next = (Entrant*) ready_list.dequeue();
 	dispatch(*next);
 }
