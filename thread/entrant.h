@@ -12,10 +12,10 @@
 #define __entrant_include__
 
 /* Add your code here */ 
-include "thread/coroutine.h"
+#include "thread/coroutine.h"
 #include "object/chain.h"
 
-class Entrant : public Chain, public Coroutin
+class Entrant : public Chain, public Coroutine
 /* Add your code here */ 
 {
 public:
