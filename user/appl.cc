@@ -11,6 +11,7 @@
 /* INCLUDES */
 #include "user/appl.h"
 #include "device/cgastr.h"
+#include "thread/dispatch.h"
 
 
 /*
@@ -23,6 +24,9 @@
  */
 extern CGA_Stream kout;
 extern Guard guard;
+// Defined in main.cc; all workers share this dispatcher so active() remains
+// correct across every coroutine handoff.
+extern Dispatcher dispatcher;
 
 // New test Routin for toc and Coroutie
 class Worker : public Coroutine {
@@ -54,7 +58,9 @@ public:
             kout << id << counter << " ";
             kout.flush();
 
-            resume(*next);
+            // Yield to the configured successor. Using Dispatcher instead of
+            // resume() directly also updates the globally active coroutine.
+            dispatcher.dispatch(*next);
         }
 
         kout << id << " done ";
@@ -168,7 +174,9 @@ int i = 0; i < 2000000; i++) {
         kout << "[M" << i << "] ";
         kout.flush();
 
-        resume(a);
+        // Transfer control from Application to worker A. The worker chain
+        // eventually dispatches back to this Application coroutine.
+        dispatcher.dispatch(a);
     }
 
     kout << endl << "Back in Application. Test finished." << endl;
