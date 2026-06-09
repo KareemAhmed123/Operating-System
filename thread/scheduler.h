@@ -13,14 +13,22 @@
 
 #include "thread/dispatch.h"
 /* Add your code here */ 
-
-class Scheduler
+#include "thread/entrant.h"
+#include "object/queue.h"
+class Scheduler : public Dispatcher
 /* Add your code here */ 
 {
+private:
+	Queue ready_list;
 public:
 	Scheduler (const Scheduler &copy) = delete; // prevent copying
 	Scheduler& operator=(const Scheduler&) = delete; // prevent assignment
 /* Add your code here */ 
+	void ready (Entrant& that);
+	void schedule ();
+	void exit();
+	void kill (Entrant& that);
+	void resume();
  
 };
 
