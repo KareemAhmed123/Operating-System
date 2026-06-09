@@ -1441,7 +1441,7 @@ user/appl.cc
 Left unstaged:
 
 ```text
-generated build files
+generated build files   
 generated dependency files
 isofiles/boot/system
 TASK3_PROGRESS.md
