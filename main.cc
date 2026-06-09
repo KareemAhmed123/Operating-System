@@ -6,6 +6,7 @@
 #include "user/appl.h"
 #include "machine/cpu.h"
 #include "guard/guard.h"
+#include "thread/dispatch.h"
 
 #include "guard/guard.h"
 
@@ -19,6 +20,9 @@ Plugbox plugbox;
 PIC pic;
 CPU cpu;
 Guard guard;
+// Central coroutine dispatcher. It records which coroutine currently owns
+// the CPU and performs all coroutine context switches after startup.
+Dispatcher dispatcher;
 
 
 static char app_stack[4096];
@@ -65,7 +69,9 @@ int main()
 	while (1) {application.action(i);} */
 	//Test Task 4a
 	Application app(app_stack + sizeof(app_stack));
-    app.go();
+    // Start the first coroutine through the dispatcher so Application is
+    // registered as the active coroutine before its action() begins.
+    dispatcher.go(app);
 
     while (1) {}
 	

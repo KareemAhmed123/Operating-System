@@ -72,15 +72,14 @@ Typical work that should not be done in the prologue:
 - waiting
 - loops
 
-For this task, `trigger()` is the natural prologue method of a `Gate`.
+For this task, `prologue()` is the natural prologue method of a `Gate`.
 
 Example idea:
 
 ```cpp
-void Keyboard::trigger()
+bool Keyboard::prologue()
 {
-    // Do not handle the whole keyboard input here.
-    // Only schedule the keyboard epilogue.
+    return true;
 }
 ```
 
@@ -100,8 +99,8 @@ For the keyboard, epilogue work can include:
 - moving the cursor
 - handling special keys
 
-In our current code, most of `Keyboard::trigger()` is really epilogue work.
-Later, that code should move into a separate epilogue method.
+In the final code, `Keyboard::prologue()` only returns whether epilogue work is
+required. The keyboard handling itself is in `Keyboard::epilogue()`.
 
 ### Why Split Interrupt Handling?
 
@@ -142,14 +141,18 @@ Examples:
 
 The `Plugbox` maps an interrupt slot to a `Gate`.
 
-Currently, `guardian()` asks the `Plugbox` for the right `Gate` and calls:
+`guardian()` asks the `Plugbox` for the right `Gate`, runs its prologue, and
+relays requested epilogue work:
 
 ```cpp
-plugbox.report(slot).trigger();
+Gate& item = plugbox.report(slot);
+if (item.prologue()) {
+    guard.relay(&item);
+}
 ```
 
-For Task 3, a `Gate` must also be placeable in an epilogue queue. That is why
-`Gate` should inherit from `Chain`:
+A `Gate` must also be placeable in an epilogue queue. That is why `Gate`
+inherits from `Chain`:
 
 ```cpp
 class Gate : public Chain
@@ -263,7 +266,7 @@ relationship between the concepts.
 
 `guardian()` is the central interrupt entry function.
 
-Currently:
+Before the Task 3 integration, `guardian()` directly called the handler:
 
 ```cpp
 void guardian(unsigned int slot)
@@ -330,7 +333,7 @@ We looked at the existing project structure and found these important files:
 - `user/appl.cc`
 - `main.cc`
 
-We saw that `Gate` was still very small:
+At the beginning, `Gate` was still very small:
 
 ```cpp
 class Gate {
@@ -339,13 +342,13 @@ public:
 };
 ```
 
-We also saw that `guardian()` currently calls the interrupt handler directly:
+At that point, `guardian()` also called the interrupt handler directly:
 
 ```cpp
 plugbox.report(slot).trigger();
 ```
 
-This is the place that will later become part of the prologue/epilogue design.
+This became the integration point for the prologue/epilogue design.
 
 ## Hard Synchronization We Found
 
@@ -670,23 +673,18 @@ objects into the epilogue queue.
 
 ## Adding Prologue And Epilogue Methods To Gate
 
-Originally, `Gate` only required a `trigger()` method.
-
-After checking the Task 3 `Guard` description, we noticed an important detail:
+The Task 3 `Guard` description requires the prologue to indicate whether an
+epilogue is needed:
 
 ```text
 relay(Gate* item) is called if the previously executed prologue has indicated
 by a return value of true that its epilogue should be executed.
 ```
 
-That means `trigger()` should not return `void`.
-
-It should return `bool`.
-
-So the correct design is:
+Therefore, the prologue returns `bool`:
 
 ```cpp
-virtual bool trigger() = 0;
+virtual bool prologue() = 0;
 ```
 
 The return value means:
@@ -699,38 +697,44 @@ false
     no epilogue is needed
 ```
 
-For Task 3, we also added:
-
-```cpp
-virtual void epilogue() = 0;
-```
-
 The meaning is:
 
-- `trigger()` is the prologue method
+- `prologue()` is the prologue method
 - `epilogue()` is the delayed work method
+- `queued()` tracks whether this Gate is already waiting in the queue
 
-The updated design is:
+The final design is:
 
 ```cpp
 class Gate : public Chain {
+private:
+    bool is_queued;
+
 public:
-    virtual bool trigger() = 0;
-    virtual void epilogue() = 0;
+    Gate()
+    {
+        next = 0;
+        is_queued = false;
+    }
+
+    virtual bool prologue() = 0;
+    virtual void epilogue() {}
+
+    void queued(bool q)
+    {
+        is_queued = q;
+    }
+
+    bool queued()
+    {
+        return is_queued;
+    }
 };
 ```
 
-The `= 0` means the method is pure virtual.
-
-So `Gate` does not implement the details itself. It only defines the interface
-that all real interrupt handler classes must follow.
-
-That means every real child of `Gate`, such as `Keyboard`, must implement both:
-
-```cpp
-bool trigger();
-void epilogue();
-```
+The queued state is necessary because a `Gate` inherits only one `next` pointer
+from `Chain`. Enqueueing the same Gate twice would reuse that pointer and
+corrupt the queue.
 
 ## Splitting Keyboard Into Prologue And Epilogue
 
@@ -754,7 +758,7 @@ The old big Keyboard::trigger() body should move to Keyboard::epilogue().
 So the design becomes:
 
 ```text
-Keyboard::trigger()
+Keyboard::prologue()
     short prologue
     later: schedule this keyboard object for epilogue work
 
@@ -762,26 +766,21 @@ Keyboard::epilogue()
     real keyboard work
 ```
 
-For now, we made the structural split first:
+The final split is:
 
 ```cpp
-bool Keyboard::trigger()
+bool Keyboard::prologue()
 {
     return true;
 }
 
 void Keyboard::epilogue()
 {
-    // old keyboard trigger logic
+    // keyboard handling logic
 }
 ```
 
-This is not the final behavior yet, because `trigger()` still needs to schedule
-the keyboard object through the `Guard`.
-
-Correction:
-
-`trigger()` itself does not directly schedule the object. Instead, it returns
+`prologue()` itself does not directly schedule the object. Instead, it returns
 `true`. Then `guardian()` will call `guard.relay(...)`.
 
 The important architectural step is done:
@@ -797,7 +796,7 @@ We checked the design before continuing.
 Question:
 
 ```text
-Should the big keyboard work stay in trigger(), or move to epilogue()?
+Should the big keyboard work stay in prologue(), or move to epilogue()?
 ```
 
 Answer:
@@ -809,7 +808,7 @@ Move to epilogue.
 Question:
 
 ```text
-What should trigger() do later?
+What should prologue() do later?
 ```
 
 Answer:
@@ -917,57 +916,14 @@ Completed structure:
 - `object/chain.h`
 - `object/queue.h`
 - `object/queue.cc`
-- `guard/gate.h`
-- `device/keyboard.h` has both `trigger()` and `epilogue()`
+- `guard/gate.h` provides prologue, epilogue, and queued-state handling
+- `guard/locker.h` provides the critical-section state
+- `guard/guard.h` and `guard/guard.cc` manage immediate and queued epilogues
+- `guard/secure.h` provides scope-based critical sections
+- `guard/guardian.cc` connects interrupt prologues to the Guard
+- `device/keyboard.h` has both `prologue()` and `epilogue()`
 - `device/keyboard.cc` has the old keyboard work moved into `epilogue()`
-- `guard/locker.h` is being created as a small inline class
-
-Next implementation step:
-
-```cpp
-guard/locker.h
-```
-
-should contain the final `Locker` class with a correct include guard:
-
-```cpp
-#ifndef __Locker_include__
-#define __Locker_include__
-
-class Locker {
-private:
-    bool free;
-
-public:
-    Locker()
-    {
-        free = true;
-    }
-
-    void enter()
-    {
-        free = false;
-    }
-
-    void retne()
-    {
-        free = true;
-    }
-
-    bool avail()
-    {
-        return free;
-    }
-};
-
-#endif
-```
-
-After that, the next big class will be `Guard`, which combines:
-
-- the `Locker` state
-- the epilogue queue
-- the logic for scheduling and running epilogues
+- `device/panic.h` and `device/panic.cc` use the same prologue/epilogue model
 
 ## Guard Concept
 
@@ -1049,40 +1005,29 @@ Implementation:
 void Guard::relay(Gate* item)
 {
     if (avail()) {
+        enter();
         cpu.enable_int();
         item->epilogue();
+        leave();
     } else {
-        queue.enqueue(item);
+        cpu.disable_int();
+        if (!item->queued()) {
+            queue.enqueue(item);
+            item->queued(true);
+        }
     }
 }
 ```
 
-Important context:
+The Guard is marked occupied before an immediate epilogue runs. This ensures
+that another interrupt prologue queues its epilogue instead of starting a
+second epilogue at the same time.
 
-The assignment says interrupts are disabled before `guardian()` is called.
-Therefore, before running the longer epilogue work, we enable interrupts again:
+The `queued()` check prevents the same `Gate` object from being inserted twice.
+This is required because each Gate has only one inherited `Chain::next` pointer.
 
-```cpp
-cpu.enable_int();
-```
-
-Then:
-
-```cpp
-item->epilogue();
-```
-
-means:
-
-```text
-Run the delayed interrupt work for this Gate.
-```
-
-If `item` points to the keyboard object, this calls:
-
-```cpp
-Keyboard::epilogue()
-```
+Queue access happens while interrupts are disabled. Epilogues run with
+interrupts enabled so that new interrupt prologues can still execute.
 
 ## Guard::leave()
 
@@ -1100,17 +1045,23 @@ Implementation:
 ```cpp
 void Guard::leave()
 {
+    cpu.disable_int();
     retne();
+
     Gate* item = (Gate*) queue.dequeue();
 
     while (item != 0) {
+        item->queued(false);
         enter();
         cpu.enable_int();
         item->epilogue();
-        retne();
 
+        cpu.disable_int();
+        retne();
         item = (Gate*) queue.dequeue();
     }
+
+    cpu.enable_int();
 }
 ```
 
@@ -1126,6 +1077,11 @@ Because an epilogue itself may use shared kernel objects. While it runs, the
 guard should be considered occupied, so another epilogue is not executed at the
 same time through `relay()`.
 
+Why clear `queued(false)` before running the epilogue?
+
+The current queue entry has already been removed. If the same device interrupts
+again while its epilogue runs, one new request may therefore be queued safely.
+
 ## Who Calls relay() And leave()?
 
 `relay()` is called by `guardian()`.
@@ -1133,15 +1089,9 @@ same time through `relay()`.
 Current `guardian()`:
 
 ```cpp
-plugbox.report(slot).trigger();
-```
-
-Later it should become conceptually:
-
-```cpp
 Gate& gate = plugbox.report(slot);
 
-if (gate.trigger()) {
+if (gate.prologue()) {
     guard.relay(&gate);
 }
 ```
@@ -1152,8 +1102,8 @@ Flow:
 interrupt happens
     -> guardian(slot)
     -> find Gate through Plugbox
-    -> call gate.trigger()
-    -> if trigger() returns true, call guard.relay(&gate)
+    -> call gate.prologue()
+    -> if prologue() returns true, call guard.relay(&gate)
 ```
 
 `leave()` is called by `Secure`.
@@ -1185,12 +1135,12 @@ Secure destructor calls leave()
 ## Guardian Integration
 
 We updated `guard/guardian.cc` so it no longer ignores the return value of
-`trigger()`.
+`prologue()`.
 
 Old idea:
 
 ```cpp
-plugbox.report(slot).trigger();
+plugbox.report(slot).prologue();
 ```
 
 New idea:
@@ -1198,7 +1148,7 @@ New idea:
 ```cpp
 Gate& item = plugbox.report(slot);
 
-if (item.trigger()) {
+if (item.prologue()) {
     guard.relay(&item);
 }
 ```
@@ -1207,7 +1157,7 @@ Meaning:
 
 ```text
 1. Find the Gate for the interrupt slot.
-2. Run its short prologue with trigger().
+2. Run its short prologue with prologue().
 3. If the prologue returns true, give the Gate to Guard.
 4. Guard decides whether the epilogue runs now or waits in the queue.
 ```
@@ -1365,19 +1315,19 @@ same global Guard object.
 
 ## Panic Update
 
-After changing `Gate::trigger()` from `void` to `bool`, `Panic` also had to be
+After changing `Gate::prologue()` from `void` to `bool`, `Panic` also had to be
 updated.
 
 Otherwise the compiler reported a return-type mismatch:
 
 ```text
-Panic::trigger() returned void, but Gate::trigger() requires bool.
+Panic::prologue() returned void, but Gate::prologue() requires bool.
 ```
 
 We changed `Panic` to follow the same prologue/epilogue structure:
 
 ```cpp
-bool Panic::trigger()
+bool Panic::prologue()
 {
     return true;
 }
@@ -1392,7 +1342,7 @@ void Panic::epilogue()
 Meaning:
 
 ```text
-Panic::trigger()
+Panic::prologue()
     short prologue, says epilogue should run
 
 Panic::epilogue()
@@ -1401,52 +1351,34 @@ Panic::epilogue()
 
 ## Build Result
 
-We ran:
+The final source state was checked with a forced rebuild:
 
 ```bash
-make
+make -B build/system
 ```
 
-The build completed successfully and produced:
+The kernel compiled and linked successfully:
 
 ```text
-build/bootdisk.iso
+build/system
 ```
 
-## Current Staging State
+The linker still prints the existing warning that the system has an RWX load
+segment. This warning is unrelated to the Task 3 Guard changes.
 
-We staged only the minimal source changes needed for the Task 3 implementation
-to build and run.
+## Source Commit
 
-Staged source/header files:
+The completed Guard/prologue changes were committed as:
 
 ```text
-device/keyboard.cc
-device/keyboard.h
-device/panic.cc
-device/panic.h
-guard/gate.h
-guard/guard.cc
-guard/guard.h
-guard/guardian.cc
-guard/locker.h
-guard/secure.h
-main.cc
-object/chain.h
-object/queue.cc
-object/queue.h
-user/appl.cc
+1bd1734 Implement Task 3 guard epilogue handling
 ```
 
-Left unstaged:
+This commit contains:
 
-```text
-generated build files   
-generated dependency files
-isofiles/boot/system
-TASK3_PROGRESS.md
-```
-
-The progress document itself is intentionally not staged as part of the minimal
-runnable code changes unless documentation is explicitly requested for the
-commit.
+- the `trigger()` to `prologue()` interface rename
+- queued-state tracking in `Gate`
+- duplicate queue-entry prevention
+- interrupt-protected queue operations
+- immediate and delayed epilogue execution through `Guard`
+- concise comments in `guard/guard.cc`
