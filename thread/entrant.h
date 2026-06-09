@@ -12,8 +12,10 @@
 #define __entrant_include__
 
 /* Add your code here */ 
+include "thread/coroutine.h"
+#include "object/chain.h"
 
-class Entrant
+class Entrant : public Chain, public Coroutin
 /* Add your code here */ 
 {
 public:
@@ -21,6 +23,7 @@ public:
 	Entrant& operator=(const Entrant&) = delete; // prevent assignment
 
 /* Add your code here */ 
+	Entrant (void* tos): Coroutine(tos){}
 };
 
 #endif
