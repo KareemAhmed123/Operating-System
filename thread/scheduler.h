@@ -24,11 +24,13 @@ public:
 	Scheduler (const Scheduler &copy) = delete; // prevent copying
 	Scheduler& operator=(const Scheduler&) = delete; // prevent assignment
 /* Add your code here */ 
-	void ready (Entrant& that);
-	void schedule ();
-	void exit();
-	void kill (Entrant& that);
-	void resume();
+	Scheduler() {}
+
+	void ready (Entrant& that);//registers the process that with the scheduler, appended to end of ready list.
+	void schedule ();//tarts up scheduling by removing the first process from the ready list and activating it.
+	void exit();//With this method a process can terminate itself.
+	void kill (Entrant& that); // kill´s that thread
+	void resume();//trigger a context switch without the calling Entrant having to know which other Entrant
  
 };
 

@@ -9,10 +9,29 @@
 /*****************************************************************************/
 
 /* Add your code here */ 
- #include "thread/schedular.h"
+ #include "thread/scheduler.h"
 /* Add your code here */ 
 
 void Scheduler:ready (Entrant& that){
 	ready_list.enqueue(&that);
+}
+
+void Scheduler : schedule(){
+	Entrant* next = (Entrant*) ready_list.dequeue();
+    dispatch(*next);
+}
+
+void Scheduler : exit(){
+	schedule();
+}
+
+void Scheduler : kill(Entrant& that){
+	ready_list.remove(&that);
+}
+
+void Scheduler : resume(){
+	ready_list.enqueue(dispatch.active ());
+	Entrant* next = (Entrant*) ready_list.dequeue();
+	dispatch(*next);
 }
 /* Add your code here */ 
