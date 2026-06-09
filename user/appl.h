@@ -11,7 +11,10 @@
 #ifndef __application_include__
 #define __application_include__
 
-class Application
+#include "guard/secure.h"
+#include "thread/coroutine.h"
+
+class Application : public Coroutine
  
 {
 
@@ -19,8 +22,8 @@ public:
 	Application (const Application &copy) = delete; // prevent copying
 	Application& operator=(const Application&) = delete; // prevent assignment
 /* Add your code here */ 
-	Application(){}
-	void action (int m);
+	Application(void* tos) : Coroutine(tos){}
+	void action () override;
 };
 
 #endif

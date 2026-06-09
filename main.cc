@@ -7,6 +7,8 @@
 #include "machine/cpu.h"
 #include "guard/guard.h"
 
+#include "guard/guard.h"
+
 //Test
 //#include "machine/keyctrl.h"
 Keyboard_Controller keyb;
@@ -17,6 +19,9 @@ Plugbox plugbox;
 PIC pic;
 CPU cpu;
 Guard guard;
+
+
+static char app_stack[4096];
 
 int main()
 {	//initialaization
@@ -30,8 +35,8 @@ int main()
 	
 	//Aplication
 	
-	//Selection of Program
-	kout << "Choose Program:" << endl;
+	//Selection of Program for Task 2&3
+	/*kout << "Choose Program:" << endl;
 	kout << "1 Mess" << endl;
 	kout << "2 Fix" << endl;
 	bool c = true;
@@ -57,7 +62,13 @@ int main()
 	
 	//running Program
 	Application application;
-	while (1) {application.action(i);} 
+	while (1) {application.action(i);} */
+	//Test Task 4a
+	Application app(app_stack + sizeof(app_stack));
+    app.go();
+
+    while (1) {}
+	
 /* Add your code here */ 
 	kout << "Error";
 /* Add your code here */ 

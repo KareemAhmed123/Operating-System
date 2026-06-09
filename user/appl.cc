@@ -11,7 +11,7 @@
 /* INCLUDES */
 #include "user/appl.h"
 #include "device/cgastr.h"
-#include "guard/secure.h"
+
 
 /*
  * Global output stream.
@@ -22,6 +22,52 @@
  * That is why output operations must be protected in the fixed mode.
  */
 extern CGA_Stream kout;
+extern Guard guard;
+
+// New test Routin for toc and Coroutie
+class Worker : public Coroutine {
+private:
+    char id;
+    Coroutine* next;
+    int limit;
+
+public:
+    Worker(void* tos, char id, int limit)
+        : Coroutine(tos), id(id), next(0), limit(limit) {}
+
+    void set_next(Coroutine* n) {
+        next = n;
+    }
+
+    void action() override {
+        int counter = 0;
+        int local_test = id;
+
+        while (counter < limit) {
+            if (local_test != id) {
+                kout << "STACK ERROR" << endl;
+                while (1) {}
+            }
+
+            counter++;
+
+            kout << id << counter << " ";
+            kout.flush();
+
+            resume(*next);
+        }
+
+        kout << id << " done ";
+        kout.flush();
+
+        while (1) {}
+    }
+};
+
+static char stack_a[4096];
+static char stack_b[4096];
+static char stack_c[4096];
+
 
 /*
  * action()
@@ -55,37 +101,18 @@ extern CGA_Stream kout;
  *      Fix mode.
  *      The output sequence is protected with Secure/Guard.
  */
-void Application::action(int m)
+void Application::action()
 {
-    /*
-     * Fixed screen position where the test characters are written.
-     */
+	/*// Test for Task 2&3
+    //Fixed screen position where the test characters are written.
     int x = 40;
     int y = 5;
 
-    /*
-     * Old cursor position.
-     *
-     * Before printing at (x, y), the application stores the current cursor
-     * position here. After printing, it restores the cursor position.
-     */
+    //Old cursor position.
     int dx, dy;
 
-    /*
-     * First output sequence: print "a".
-     *
-     * In mode 2, Secure creates a protected critical section.
-     *
-     * Important:
-     *
-     *   Secure section;
-     *
-     * calls guard.enter() in its constructor.
-     *
-     * When the if-block ends, section is destroyed automatically, and its
-     * destructor calls guard.leave().
-     */
-    if (m == 2) {
+    //First output sequence: print "a".
+	if (m == 2) {
         Secure section;
 
         kout.getpos(dx, dy);
@@ -94,10 +121,7 @@ void Application::action(int m)
         kout.flush();
         kout.setpos(dx, dy);
     } else {
-        /*
-         * Mode 1 intentionally does the same output without protection.
-         * This keeps the old "Mess" test behavior.
-         */
+        //Mode 1 intentionally does the same output without protection.
         kout.getpos(dx, dy);
         kout.setpos(x, y);
         kout << "a";
@@ -105,20 +129,10 @@ void Application::action(int m)
         kout.setpos(dx, dy);
     }
 
-    /*
-     * Delay loop.
-     *
-     * It makes the changing output visible and gives keyboard interrupts
-     * time to happen between the two output sequences.
-     */
-    for (int i = 0; i < 2000000; i++) {
+    //Delay loop.
+int i = 0; i < 2000000; i++) {
     }
-
-    /*
-     * Second output sequence: print "A".
-     *
-     * Same critical pattern as above.
-     */
+    //Second output sequence: print "A".
     if (m == 2) {
         Secure section;
 
@@ -135,9 +149,29 @@ void Application::action(int m)
         kout.setpos(dx, dy);
     }
 
-    /*
-     * Another delay before the next loop iteration.
-     */
+    //Another delay 
     for (int i = 0; i < 2000000; i++) {
+    }*/
+    
+    //New Test for Task4a
+	Worker a(stack_a + sizeof(stack_a), 'A', 5);
+    Worker b(stack_b + sizeof(stack_b), 'B', 5);
+    Worker c(stack_c + sizeof(stack_c), 'C', 5);
+
+    a.set_next(&b);
+    b.set_next(&c);
+    c.set_next(this);
+
+    kout << "Coroutine test:" << endl;
+
+    for (int i = 0; i < 5; i++) {
+        kout << "[M" << i << "] ";
+        kout.flush();
+
+        resume(a);
     }
+
+    kout << endl << "Back in Application. Test finished." << endl;
+
+    while (1) {}
 }
