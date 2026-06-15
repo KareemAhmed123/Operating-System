@@ -4,15 +4,13 @@
 #include "machine/plugbox.h"
 #include "machine/pic.h"
 #include "user/appl.h"
+#include "user/loop.h"
 #include "machine/cpu.h"
 #include "guard/guard.h"
 #include "thread/dispatch.h"
-
-#include "guard/guard.h"
-
-//Test
-//#include "machine/keyctrl.h"
-Keyboard_Controller keyb;
+#include "guard/secure.h"
+#include "thread/scheduler.h"
+#include "thread/coroutine.h"
 
 
 CGA_Stream kout;
@@ -20,60 +18,29 @@ Plugbox plugbox;
 PIC pic;
 CPU cpu;
 Guard guard;
-// Central coroutine dispatcher. It records which coroutine currently owns
-// the CPU and performs all coroutine context switches after startup.
-Dispatcher dispatcher;
+Scheduler scheduler;
 
 
-static char app_stack[4096];
+static char app_stack_1[4096];
+static char app_stack_2[4096];
+
+int id = 0;
 
 int main()
 {	//initialaization
 	Keyboard keyboard;
 	keyboard.plugin();
-	kout.clear();
-	
-	//interupt enabaling
-	//cpu.enable_int();
-	//pic.allow(PIC::keyboard);
-	
-	//Aplication
-	
-	//Selection of Program for Task 2&3
-	/*kout << "Choose Program:" << endl;
-	kout << "1 Mess" << endl;
-	kout << "2 Fix" << endl;
-	bool c = true;
-	int i;
-	while(c){
-		Key k = keyb.key_hit();
-		if (k.valid()) { 
-			if(k.scancode() == 0x2){
-				i = 1;
-				c = false;
-				//kout << 1;
-			} else if(k.scancode() == 0x3){
-				i = 2;
-				c = false;
-				//kout << 2;
-			}
-		}
-	}
-	kout.clear();
-	for(int a = 0; a<10000; a++){}
+	kout.clear();	
 	cpu.enable_int();
-	pic.allow(PIC::keyboard);
 	
-	//running Program
-	Application application;
-	while (1) {application.action(i);} */
-	//Test Task 4a
-	Application app(app_stack + sizeof(app_stack));
-    // Start the first coroutine through the dispatcher so Application is
-    // registered as the active coroutine before its action() begins.
-    dispatcher.go(app);
+	Application app_1(app_stack_1 + sizeof(app_stack_1));
+    scheduler.ready(app_1);
+	Loop app_2(app_stack_2 + sizeof(app_stack_2));
+	scheduler.ready(app_2);
+	
+	
+    scheduler.schedule();
 
-    while (1) {}
 	
 /* Add your code here */ 
 	kout << "Error";

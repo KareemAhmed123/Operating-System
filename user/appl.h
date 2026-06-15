@@ -12,9 +12,10 @@
 #define __application_include__
 
 #include "guard/secure.h"
-#include "thread/coroutine.h"
+#include "thread/entrant.h"
+#include "thread/scheduler.h"
 
-class Application : public Coroutine
+class Application : public Entrant
  
 {
 
@@ -22,7 +23,7 @@ public:
 	Application (const Application &copy) = delete; // prevent copying
 	Application& operator=(const Application&) = delete; // prevent assignment
 /* Add your code here */ 
-	Application(void* tos) : Coroutine(tos){}
+	Application(void* tos) : Entrant(tos){}
 	void action () override;
 };
 
