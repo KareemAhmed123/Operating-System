@@ -52,7 +52,7 @@ void Loop::action(){
 	//	kout << endl;
 		z=0;
 		if (y == 1){
-			scheduler.exit();
+			scheduler.kill(*this);
 		}
 		for(int i=0;i<100000;i++){}//so interupts still hav a chance
 		scheduler.resume();

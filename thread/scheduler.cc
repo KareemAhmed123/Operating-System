@@ -18,15 +18,22 @@ void Scheduler::ready (Entrant& that){
 
 void Scheduler :: schedule(){
 	Entrant* next = (Entrant*) ready_list.dequeue();
-    dispatch(*next);
+    go(*next);
 }
 
 void Scheduler :: exit(){
-	schedule();
+	Entrant* next = (Entrant*) ready_list.dequeue();
+    dispatch(*next);
 }
 
 void Scheduler :: kill(Entrant& that){
-	ready_list.remove(&that);
+	if (active() == &that){
+		exit();
+	} else {
+		ready_list.remove(&that); 
+		Entrant* next = (Entrant*) ready_list.dequeue();
+		dispatch(*next);
+	}
 }
 
 void Scheduler :: resume(){
